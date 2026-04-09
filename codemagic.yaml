@@ -13,7 +13,7 @@ workflows:
           flutter build apk \
             --release \
             --no-tree-shake-icons \
-            --dart-define=thingsboardApiEndpoint=http://192.168.0.109:9090 \
+            --dart-define=thingsboardApiEndpoint=http://cumuloingenieria.duckdns.org:9090/ \
             --dart-define=thingsboardOAuth2CallbackUrlScheme=tb://mytbapp.com/oauth2/callback \
             --dart-define=thingsboardAndroidAppSecret= \
             --dart-define=thingsboardIOSAppSecret=
