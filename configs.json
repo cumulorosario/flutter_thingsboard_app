@@ -1,0 +1,10 @@
+{
+  "thingsboardApiEndpoint": "https://monitoreo.cumuloingenieria.com.ar",
+  "androidApplicationId": "ar.com.cumuloingenieria.monitoreo",
+  "androidApplicationName": "Cúmulo Monitoreo",
+  "thingsboardOAuth2CallbackUrlScheme": "ar.com.cumuloingenieria.monitoreo.auth",
+  "appLinksUrlHost": "monitoreo.cumuloingenieria.com.ar",
+  "appLinksUrlScheme": "https",
+  "thingsboardAndroidAppSecret": "",
+  "thingsboardIosAppSecret": ""
+}

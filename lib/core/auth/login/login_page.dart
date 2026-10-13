@@ -123,7 +123,7 @@ class _LoginPageState extends TbPageState<LoginPage>
                                       children: [
                                         SvgPicture.asset(
                                           ThingsboardImage.thingsBoardWithTitle,
-                                          height: 25,
+                                          height: 44,
                                           colorFilter: ColorFilter.mode(
                                             Theme.of(context).primaryColor,
                                             BlendMode.srcIn,
@@ -131,7 +131,7 @@ class _LoginPageState extends TbPageState<LoginPage>
                                           semanticsLabel:
                                               S.of(context).logoDefaultValue,
                                         ),
-                                        const SizedBox(height: 25),
+                                        const SizedBox(height: 44),
                                         Visibility(
                                           visible: selectedRegion != null,
                                           child: TextButton(

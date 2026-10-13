@@ -56,7 +56,7 @@ class S {
 
   /// `ThingsBoard`
   String get appTitle {
-    return Intl.message('ThingsBoard', name: 'appTitle', desc: '', args: []);
+    return Intl.message('Cúmulo Monitoreo', name: 'appTitle', desc: '', args: []);
   }
 
   /// `Home`
@@ -109,7 +109,7 @@ class S {
   /// `ThingsBoard Logo`
   String get logoDefaultValue {
     return Intl.message(
-      'ThingsBoard Logo',
+      'Logo Cúmulo Ingeniería',
       name: 'logoDefaultValue',
       desc: '',
       args: [],
