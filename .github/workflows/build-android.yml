@@ -1,7 +1,10 @@
 name: Cúmulo Monitoreo — Build Android
 
-# Se ejecuta a mano desde la pestaña "Actions", eligiendo APK o AAB.
+# Se ejecuta solo cada vez que se sube un cambio a la rama "cumulo" (genera APK),
+# o a mano desde la pestaña "Actions", eligiendo APK o AAB.
 on:
+  push:
+    branches: [cumulo]
   workflow_dispatch:
     inputs:
       formato:
@@ -48,13 +51,13 @@ jobs:
 
       - name: Compilar
         run: |
-          flutter build ${{ inputs.formato }} --release \
+          flutter build ${{ inputs.formato || 'apk' }} --release \
             --dart-define-from-file=configs.json
 
       - name: Guardar el resultado
         uses: actions/upload-artifact@v5
         with:
-          name: cumulo-monitoreo-${{ inputs.formato }}
+          name: cumulo-monitoreo-${{ inputs.formato || 'apk' }}
           path: |
             build/app/outputs/flutter-apk/*.apk
             build/app/outputs/bundle/release/*.aab
