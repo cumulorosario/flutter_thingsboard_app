@@ -56,7 +56,7 @@ class S {
 
   /// `ThingsBoard`
   String get appTitle {
-    return Intl.message('Cúmulo Monitoreo', name: 'appTitle', desc: '', args: []);
+    return Intl.message('ThingsBoard', name: 'appTitle', desc: '', args: []);
   }
 
   /// `Home`
@@ -109,7 +109,7 @@ class S {
   /// `ThingsBoard Logo`
   String get logoDefaultValue {
     return Intl.message(
-      'Logo Cúmulo Ingeniería',
+      'ThingsBoard Logo',
       name: 'logoDefaultValue',
       desc: '',
       args: [],
@@ -2668,7 +2668,6 @@ class AppLocalizationDelegate extends LocalizationsDelegate<S> {
   List<Locale> get supportedLocales {
     return const <Locale>[
       Locale.fromSubtags(languageCode: 'en'),
-      Locale.fromSubtags(languageCode: 'es'),
       Locale.fromSubtags(languageCode: 'ar'),
       Locale.fromSubtags(languageCode: 'zh'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),

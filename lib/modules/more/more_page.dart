@@ -129,7 +129,7 @@ class _MorePageState extends TbContextState<MorePage> {
     final ver = getIt<IDeviceInfoService>().getBuildVersion();
     if (EnvironmentVariables.showAppVersion) {
       // translate-me-ignore-next-line
-      return Text('versión: $ver');
+      return Text('version: $ver');
     }
     return const SizedBox();
   }

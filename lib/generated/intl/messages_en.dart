@@ -223,7 +223,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "anyType": MessageLookupByLibrary.simpleMessage("Any type"),
     "apiUsageState": MessageLookupByLibrary.simpleMessage("API Usage State"),
-    "appTitle": MessageLookupByLibrary.simpleMessage("Cúmulo Monitoreo"),
+    "appTitle": MessageLookupByLibrary.simpleMessage("ThingsBoard"),
     "areYouSure": MessageLookupByLibrary.simpleMessage("Are you sure?"),
     "asset": MessageLookupByLibrary.simpleMessage("Asset"),
     "assetName": MessageLookupByLibrary.simpleMessage("Asset name"),
@@ -397,7 +397,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "loginWith": MessageLookupByLibrary.simpleMessage("Login with"),
     "logoDefaultValue": MessageLookupByLibrary.simpleMessage(
-      "Logo Cúmulo Ingeniería",
+      "ThingsBoard Logo",
     ),
     "logout": MessageLookupByLibrary.simpleMessage("Log Out"),
     "major": MessageLookupByLibrary.simpleMessage("Major"),

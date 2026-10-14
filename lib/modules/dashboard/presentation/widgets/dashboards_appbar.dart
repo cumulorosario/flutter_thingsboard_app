@@ -35,14 +35,14 @@ class DashboardsAppbar extends StatelessWidget {
         elevation: dashboardState ? 0 : 8,
         title: Center(
           child: SizedBox(
-            height: 32,
+            height: 24,
             child: SvgPicture.asset(
               ThingsboardImage.thingsBoardWithTitle,
               colorFilter: ColorFilter.mode(
                 Theme.of(context).primaryColor,
                 BlendMode.srcIn,
               ),
-              semanticsLabel: 'Logo Cúmulo Ingeniería',
+              semanticsLabel: 'ThingsBoard Logo',
             ),
           ),
         ),

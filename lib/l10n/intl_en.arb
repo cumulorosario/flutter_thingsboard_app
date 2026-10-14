@@ -1,5 +1,5 @@
 {
-  "appTitle": "Cúmulo Monitoreo",
+  "appTitle": "ThingsBoard",
   "home": "Home",
   "devices": "{count, plural, =1{Device} other{Devices}}",
   "@devices": {
@@ -15,7 +15,7 @@
   "auditLogs": "Audit Logs",
   "logout": "Log Out",
   "login": "Log In",
-  "logoDefaultValue": "Logo Cúmulo Ingeniería",
+  "logoDefaultValue": "ThingsBoard Logo",
   "loginNotification": "Login to your account",
   "email": "Email",
   "emailRequireText": "Email is required.",

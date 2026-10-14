@@ -39,6 +39,11 @@ jobs:
           channel: stable
           cache: true
 
+      # Aplica logos, colores, nombre y español sobre el código original
+      # de ThingsBoard (todo lo de Cúmulo está en la carpeta cumulo/)
+      - name: Aplicar personalización Cúmulo
+        run: python3 cumulo/scripts/aplicar.py
+
       - name: Descargar dependencias
         run: flutter pub get
 
@@ -52,7 +57,7 @@ jobs:
       - name: Compilar
         run: |
           flutter build ${{ inputs.formato || 'apk' }} --release \
-            --dart-define-from-file=configs.json
+            --dart-define-from-file=cumulo/configs.json
 
       - name: Guardar el resultado
         uses: actions/upload-artifact@v5

@@ -1,5 +1,5 @@
 {
-  "appTitle": "Cúmulo Monitoreo",
+  "appTitle": "ThingsBoard",
   "home": "الرئيسية",
 "devices": "{count, plural, =1{Device} other{Devices}}",
   "@devices": {

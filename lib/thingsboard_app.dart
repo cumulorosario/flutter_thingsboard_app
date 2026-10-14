@@ -37,8 +37,6 @@ class _ThingsBoardAppState extends State<ThingsboardApp> {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: S.delegate.supportedLocales,
-        // Cúmulo: la app siempre en español, sin importar el idioma del teléfono
-        locale: const Locale('es'),
         onGenerateTitle: (BuildContext context) => S.of(context).appTitle,
         themeMode: ThemeMode.light,
         theme: tbTheme,
