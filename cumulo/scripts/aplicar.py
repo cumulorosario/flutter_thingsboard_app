@@ -248,6 +248,59 @@ def aplicar_espanol():
                "supportedLocales: S.delegate.supportedLocales,\n        locale: const Locale('es'),\n")
 
 
+# ---------------------------------------------------------------------------
+# 5. Firebase (notificaciones push)
+#    La configuración NO está en el repositorio: se toma del secret de GitHub
+#    GOOGLE_SERVICES_JSON (variable de entorno) o, para compilar en la PC, del
+#    archivo cumulo/google-services.json (ignorado por git).
+# ---------------------------------------------------------------------------
+PAQUETE = json.loads((CUMULO / "configs.json").read_text(encoding="utf-8"))["androidApplicationId"]
+
+
+def aplicar_firebase():
+    import os
+    contenido = os.environ.get("GOOGLE_SERVICES_JSON", "").strip()
+    local = CUMULO / "google-services.json"
+    if not contenido and local.exists():
+        contenido = local.read_text(encoding="utf-8")
+    if not contenido:
+        print("AVISO: sin google-services.json, la app se compila SIN notificaciones push.")
+        return
+    gs = json.loads(contenido)
+    cliente = next((c for c in gs["client"]
+                    if c["client_info"]["android_client_info"]["package_name"] == PAQUETE), None)
+    if cliente is None:
+        errores.append(f"google-services.json no tiene una app Android con el paquete {PAQUETE}")
+        return
+    pi = gs["project_info"]
+    opciones = {
+        "apiKey": cliente["api_key"][0]["current_key"],
+        "appId": cliente["client_info"]["mobilesdk_app_id"],
+        "messagingSenderId": pi["project_number"],
+        "projectId": pi["project_id"],
+        "storageBucket": pi.get("storage_bucket", ""),
+    }
+    campos = "\n".join(f"    {k}: '{v}'," for k, v in opciones.items())
+    escribir("lib/firebase_options.dart", f"""// Generado por cumulo/scripts/aplicar.py a partir de google-services.json
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+
+class DefaultFirebaseOptions {{
+  static FirebaseOptions get currentPlatform {{
+    if (defaultTargetPlatform == TargetPlatform.android) {{
+      return android;
+    }}
+    throw UnsupportedError('Firebase solo está configurado para Android.');
+  }}
+
+  static const FirebaseOptions android = FirebaseOptions(
+{campos}
+  );
+}}
+""")
+    print(f"Firebase configurado (proyecto {pi['project_id']}).")
+
+
 if __name__ == "__main__":
     if (RAIZ / "lib" / "generated" / "intl" / "messages_es.dart").exists():
         sys.exit("La personalización ya está aplicada. Para volver a aplicarla, primero "
@@ -257,6 +310,7 @@ if __name__ == "__main__":
     aplicar_colores()
     aplicar_textos_y_logo()
     aplicar_espanol()
+    aplicar_firebase()
     if errores:
         print("\nNo se pudo aplicar la personalización completa. Revisar con esta versión de ThingsBoard:")
         for e in errores:

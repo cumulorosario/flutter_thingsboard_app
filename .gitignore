@@ -47,3 +47,5 @@ app_constants.json
 /android/app/.cxx
 # FVM Version Cache
 .fvm/
+# Configuración de Firebase (se carga como secret en GitHub)
+cumulo/google-services.json
