@@ -58,8 +58,16 @@ jobs:
 
       - name: Compilar
         run: |
-          flutter build ${{ inputs.formato || 'apk' }} --release \
-            --dart-define-from-file=cumulo/configs.json
+          # APK: uno por tipo de procesador (--split-per-abi) en vez de uno
+          # "universal" que trae los tres juntos y pesa el triple.
+          # Para celulares actuales usar el que termina en arm64-v8a.
+          if [ "${{ inputs.formato || 'apk' }}" = "apk" ]; then
+            flutter build apk --release --split-per-abi \
+              --dart-define-from-file=cumulo/configs.json
+          else
+            flutter build appbundle --release \
+              --dart-define-from-file=cumulo/configs.json
+          fi
 
       - name: Guardar el resultado
         uses: actions/upload-artifact@v5
