@@ -117,7 +117,41 @@ class AlarmaCriticaActivity : Activity() {
         raiz.addView(reconocer)
         raiz.addView(resolver)
         raiz.addView(silenciar)
+
+        // Compartir (WhatsApp, correo, etc.) y silenciar este tipo de alarma de este equipo
+        val extras = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                .apply { topMargin = dp(4) }
+        }
+        val compartir = boton("Compartir", Color.TRANSPARENT, Color.parseColor("#FFCDD2"))
+        val noAvisar = boton("No avisar más de esto", Color.TRANSPARENT, Color.parseColor("#FFCDD2"))
+        extras.addView(compartir, LinearLayout.LayoutParams(0, dp(52), 1f))
+        extras.addView(noAvisar, LinearLayout.LayoutParams(0, dp(52), 1f))
+        raiz.addView(extras)
         setContentView(raiz)
+
+        compartir.setOnClickListener {
+            AlarmaCritica.silenciar(this, alarmId)
+            val severidadOriginal = d.getString(AlarmaCritica.K_SEVERIDAD) ?: "CRITICAL"
+            Compartir.abrir(this, "Alarma: $dispositivo — $tipo",
+                Compartir.textoAlarma(dispositivo, tipo, severidadOriginal, "Activa",
+                    d.getString("createdTime")?.toLongOrNull()))
+        }
+        noAvisar.setOnClickListener {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("No avisar más de esta alarma")
+                .setMessage("No vas a recibir más alarmas críticas \"$tipo\" de $dispositivo en este teléfono. " +
+                    "Podés reactivarla desde Más → Alarmas y notificaciones.")
+                .setPositiveButton("Silenciar") { _, _ ->
+                    AlarmasSilenciadas.silenciar(this, dispositivo, tipo)
+                    AlarmaCritica.silenciar(this, alarmId)
+                    Toast.makeText(this, "Alarma silenciada", Toast.LENGTH_LONG).show()
+                    finish()
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        }
 
         fun ejecutar(accion: String) {
             AlarmaCritica.silenciar(this, alarmId)

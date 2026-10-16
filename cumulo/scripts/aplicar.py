@@ -336,6 +336,24 @@ MANIFIESTO_COMPONENTES = """
             android:screenOrientation="portrait"
             android:taskAffinity="org.thingsboard.app.cumulo.alarma"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity
+            android:name=".cumulo.AjustesAlarmasActivity"
+            android:exported="false"
+            android:label="Alarmas y notificaciones"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <activity
+            android:name=".cumulo.PuenteCumuloActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="cumulo-alarmas" />
+            </intent-filter>
+        </activity>
         <provider
             android:name=".cumulo.PermisosAlarmaProvider"
             android:authorities="${applicationId}.cumulo.permisos"
@@ -371,6 +389,27 @@ def aplicar_zoom_dashboards():
                "          initialSettings: settings,\n          initialUserScripts: cumuloScriptsZoom,\n")
 
 
+# ---------------------------------------------------------------------------
+# 8. Ajustes de alarmas, compartir y silenciar (cumulo/dart/alarmas_cumulo.dart)
+# ---------------------------------------------------------------------------
+def aplicar_menu_alarmas():
+    destino = RAIZ / "lib" / "cumulo"
+    destino.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(CUMULO / "dart" / "alarmas_cumulo.dart", destino / "alarmas_cumulo.dart")
+    imp = "import 'package:thingsboard_app/cumulo/alarmas_cumulo.dart';\n"
+
+    rel = "lib/modules/more/more_page.dart"
+    reemplazar(rel, "import 'package:flutter/material.dart';\n", "import 'package:flutter/material.dart';\n" + imp)
+    reemplazar(rel, "Flexible(child: buildMoreMenuItems(context)),\n",
+               "Flexible(child: buildMoreMenuItems(context)),\n                    cumuloMenuAlarmas(context),\n")
+
+    rel = "lib/modules/alarm/presentation/view/alarm_details_page.dart"
+    reemplazar(rel, "import 'package:flutter/material.dart';\n", "import 'package:flutter/material.dart';\n" + imp)
+    reemplazar(rel, r"(appBar: TbAppBar\(\s*\n\s*tbContext,\s*\n)(\s*)(title: Text\(\s*\n\s*state\.alarmInfo\.type,)",
+               r"\1\2actions: cumuloAccionesAlarma(context, state.alarmInfo),\n\2\3", regex=True,
+               descripcion="barra superior del detalle de alarma")
+
+
 if __name__ == "__main__":
     if (RAIZ / "lib" / "generated" / "intl" / "messages_es.dart").exists():
         sys.exit("La personalización ya está aplicada. Para volver a aplicarla, primero "
@@ -383,6 +422,7 @@ if __name__ == "__main__":
     aplicar_firebase()
     aplicar_alarma_critica()
     aplicar_zoom_dashboards()
+    aplicar_menu_alarmas()
     if errores:
         print("\nNo se pudo aplicar la personalización completa. Revisar con esta versión de ThingsBoard:")
         for e in errores:

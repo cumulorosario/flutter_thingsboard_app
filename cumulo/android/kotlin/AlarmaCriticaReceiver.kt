@@ -17,6 +17,12 @@ class AlarmaCriticaReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val datos = intent.extras ?: return
         if (!AlarmaCritica.esCritica(datos)) return
+        val dispositivo = datos.getString(AlarmaCritica.K_DISPOSITIVO) ?: ""
+        val tipo = datos.getString(AlarmaCritica.K_TIPO) ?: ""
+        if (AlarmasSilenciadas.estaSilenciada(context, dispositivo, tipo)) {
+            android.util.Log.i("CumuloCritica", "Silenciada en este teléfono: $tipo de $dispositivo")
+            return
+        }
         AlarmaCritica.mostrar(context.applicationContext, datos)
     }
 }
