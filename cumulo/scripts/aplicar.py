@@ -301,6 +301,59 @@ class DefaultFirebaseOptions {{
     print(f"Firebase configurado (proyecto {pi['project_id']}).")
 
 
+# ---------------------------------------------------------------------------
+# 6. Alarma crítica (código Android nativo en cumulo/android/kotlin/)
+#    Pantalla completa sobre el bloqueo y sonido de alarma que se repite
+#    hasta que alguien la atiende. Ver cumulo/servidor/alertas_criticas/.
+# ---------------------------------------------------------------------------
+MANIFIESTO_PERMISOS = """    <!-- Cúmulo: alarma crítica -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+"""
+
+MANIFIESTO_COMPONENTES = """
+        <!-- Cúmulo: alarma crítica -->
+        <receiver
+            android:name=".cumulo.AlarmaCriticaReceiver"
+            android:exported="true"
+            android:permission="com.google.android.c2dm.permission.SEND">
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".cumulo.AccionAlarmaReceiver"
+            android:exported="false" />
+        <activity
+            android:name=".cumulo.AlarmaCriticaActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:screenOrientation="portrait"
+            android:taskAffinity="org.thingsboard.app.cumulo.alarma"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <provider
+            android:name=".cumulo.PermisosAlarmaProvider"
+            android:authorities="${applicationId}.cumulo.permisos"
+            android:exported="false" />
+    </application>"""
+
+
+def aplicar_alarma_critica():
+    destino = RAIZ / "android" / "app" / "src" / "main" / "kotlin" / "org" / "thingsboard" / "app" / "cumulo"
+    destino.mkdir(parents=True, exist_ok=True)
+    for kt in (CUMULO / "android" / "kotlin").glob("*.kt"):
+        shutil.copyfile(kt, destino / kt.name)
+    rel = "android/app/src/main/AndroidManifest.xml"
+    reemplazar(rel, '    <uses-permission android:name="android.permission.INTERNET" />\n',
+               '    <uses-permission android:name="android.permission.INTERNET" />\n' + MANIFIESTO_PERMISOS)
+    reemplazar(rel, "    </application>", MANIFIESTO_COMPONENTES.lstrip("\n"))
+
+
 if __name__ == "__main__":
     if (RAIZ / "lib" / "generated" / "intl" / "messages_es.dart").exists():
         sys.exit("La personalización ya está aplicada. Para volver a aplicarla, primero "
@@ -311,6 +364,7 @@ if __name__ == "__main__":
     aplicar_textos_y_logo()
     aplicar_espanol()
     aplicar_firebase()
+    aplicar_alarma_critica()
     if errores:
         print("\nNo se pudo aplicar la personalización completa. Revisar con esta versión de ThingsBoard:")
         for e in errores:
