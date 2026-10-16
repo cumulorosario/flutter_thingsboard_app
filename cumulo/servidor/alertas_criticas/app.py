@@ -21,6 +21,7 @@ import logging
 import os
 import threading
 import time
+import uuid
 
 import psycopg2
 import requests
@@ -167,6 +168,12 @@ def tb_token() -> str:
     return _tb["token"]
 
 
+def tb_estado_alarma(alarm_id: str) -> dict | None:
+    r = requests.get(f"{TB_URL}/api/alarm/info/{alarm_id}",
+                     headers={"X-Authorization": f"Bearer {tb_token()}"}, timeout=10)
+    return r.json() if r.status_code == 200 else None
+
+
 def tb_accion(alarm_id: str, accion: str) -> int:
     ruta = "ack" if accion == "ack" else "clear"
     url = f"{TB_URL}/api/alarm/{alarm_id}/{ruta}"
@@ -231,6 +238,10 @@ def accion():
         log.warning("Firma inválida o vencida para %s %s", acc, alarm_id)
         return jsonify(ok=False, error="Firma inválida o vencida"), 403
     try:
+        uuid.UUID(str(alarm_id))
+    except ValueError:
+        return jsonify(ok=False, error="La alarma no existe en ThingsBoard"), 404
+    try:
         codigo = tb_accion(alarm_id, acc)
     except Exception as e:  # noqa: BLE001
         log.error("Error llamando a ThingsBoard: %s", e)
@@ -238,9 +249,14 @@ def accion():
     log.info("Acción %s sobre %s desde la app: ThingsBoard respondió %s", acc, alarm_id, codigo)
     if codigo == 200:
         return jsonify(ok=True)
-    # La alarma ya estaba reconocida/resuelta: para el usuario es lo mismo
+    # ThingsBoard responde 400 si la alarma ya estaba reconocida/resuelta.
+    # Se confirma consultando su estado real antes de informar éxito.
     if codigo == 400:
-        return jsonify(ok=True, aviso="La alarma ya estaba en ese estado")
+        info = tb_estado_alarma(alarm_id)
+        if info and ((acc == "ack" and info.get("acknowledged")) or (acc == "clear" and info.get("cleared"))):
+            return jsonify(ok=True, aviso="La alarma ya estaba en ese estado")
+    if codigo == 404:
+        return jsonify(ok=False, error="La alarma no existe en ThingsBoard"), 404
     return jsonify(ok=False, error=f"ThingsBoard respondió {codigo}"), 502
 
 
