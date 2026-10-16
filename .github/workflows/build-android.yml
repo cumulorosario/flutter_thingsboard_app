@@ -58,16 +58,24 @@ jobs:
 
       - name: Compilar
         run: |
-          # APK: uno por tipo de procesador (--split-per-abi) en vez de uno
-          # "universal" que trae los tres juntos y pesa el triple.
-          # Para celulares actuales usar el que termina en arm64-v8a.
+          # APK solo para procesadores de 64 bits (arm64): cualquier celular
+          # de los últimos años. Un APK "universal" trae tres juntos y pesa el triple.
+          set -o pipefail
           if [ "${{ inputs.formato || 'apk' }}" = "apk" ]; then
-            flutter build apk --release --split-per-abi \
-              --dart-define-from-file=cumulo/configs.json
+            flutter build apk --release --target-platform android-arm64 \
+              --dart-define-from-file=cumulo/configs.json 2>&1 | tee build.log
           else
             flutter build appbundle --release \
-              --dart-define-from-file=cumulo/configs.json
+              --dart-define-from-file=cumulo/configs.json 2>&1 | tee build.log
           fi
+
+      # Si falla, deja los errores visibles en el resumen de la ejecución
+      - name: Mostrar errores de compilación
+        if: failure()
+        run: |
+          grep -E "^e: |error:|What went wrong|Exception" build.log | head -30 | while IFS= read -r linea; do
+            echo "::error::${linea}"
+          done
 
       - name: Guardar el resultado
         uses: actions/upload-artifact@v5
