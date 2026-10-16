@@ -354,6 +354,23 @@ def aplicar_alarma_critica():
     reemplazar(rel, "    </application>", MANIFIESTO_COMPONENTES.lstrip("\n"))
 
 
+# ---------------------------------------------------------------------------
+# 7. Zoom y paneo en los dashboards (cumulo/dart/zoom_dashboards.dart)
+# ---------------------------------------------------------------------------
+def aplicar_zoom_dashboards():
+    destino = RAIZ / "lib" / "cumulo"
+    destino.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(CUMULO / "dart" / "zoom_dashboards.dart", destino / "zoom_dashboards.dart")
+    rel = "lib/modules/dashboard/presentation/widgets/dashboard_widget.dart"
+    reemplazar(rel, "import 'package:flutter_inappwebview/flutter_inappwebview.dart';\n",
+               "import 'package:flutter_inappwebview/flutter_inappwebview.dart';\n"
+               "import 'package:thingsboard_app/cumulo/zoom_dashboards.dart';\n")
+    reemplazar(rel, "    supportZoom: false,\n",
+               "    supportZoom: true,\n    builtInZoomControls: true,\n    displayZoomControls: false,\n")
+    reemplazar(rel, "          initialSettings: settings,\n",
+               "          initialSettings: settings,\n          initialUserScripts: cumuloScriptsZoom,\n")
+
+
 if __name__ == "__main__":
     if (RAIZ / "lib" / "generated" / "intl" / "messages_es.dart").exists():
         sys.exit("La personalización ya está aplicada. Para volver a aplicarla, primero "
@@ -365,6 +382,7 @@ if __name__ == "__main__":
     aplicar_espanol()
     aplicar_firebase()
     aplicar_alarma_critica()
+    aplicar_zoom_dashboards()
     if errores:
         print("\nNo se pudo aplicar la personalización completa. Revisar con esta versión de ThingsBoard:")
         for e in errores:
