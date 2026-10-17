@@ -157,7 +157,7 @@ class AjustesAlarmasActivity : Activity() {
         if (silenciadas.isEmpty()) {
             contenido.addView(tarjeta().apply {
                 addView(texto("No hay alarmas silenciadas. Para silenciar una, abrila en la app o usá el botón " +
-                    "\"Silenciar este tipo\" en la pantalla de alarma.", 13f, Color.parseColor("#5B6B80")))
+                    "\"No avisar más de esto\" en la pantalla de alarma.", 13f, Color.parseColor("#5B6B80")))
             })
         } else {
             silenciadas.forEach { f ->
