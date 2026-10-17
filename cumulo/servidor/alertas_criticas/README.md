@@ -40,8 +40,10 @@ En el servidor, dentro de `~/thingsboard`:
 4. Publicar solo la ruta de acciones en Caddy (ver `Caddyfile` abajo).
 5. `docker compose up -d --build cumulo_alertas caddy`
 6. En la cadena de reglas: nodo **REST API Call** con URL
-   `http://cumulo_alertas:5556/critica`, método POST, conectado a la salida
-   *Created* de las alarmas (igual que el nodo del webhook de Vigia).
+   `http://cumulo-alertas:5556/critica` (**con guion medio**), método POST,
+   conectado a la salida *Created* de las alarmas. ThingsBoard rechaza las
+   URL con guion bajo en el nombre del host ("Url string is invalid!"), por
+   eso el servicio publica el alias `cumulo-alertas` en la red de Docker.
 7. En el Centro de notificaciones, sacar la severidad **Crítica** de la regla
    de notificación normal, para no recibir dos avisos por la misma alarma.
 
@@ -68,6 +70,9 @@ services:
     depends_on:
       - postgres
       - thingsboard-ce
+    networks:
+      default:
+        aliases: [cumulo-alertas]
 ```
 
 ### `Caddyfile`
