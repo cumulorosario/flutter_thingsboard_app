@@ -194,10 +194,13 @@ def critica():
     severidad = str(alarma.get("severity", "")).upper()
     estado = str(alarma.get("status", "ACTIVE_UNACK")).upper()
     if not alarm_id:
+        log.warning("Pedido sin id de alarma: %s", str(alarma)[:300])
         return jsonify(ok=False, error="La alarma no tiene id"), 400
     if severidad not in SEVERIDADES:
+        log.info("Alarma %s ignorada: severidad %s", alarm_id, severidad)
         return jsonify(ok=True, ignorada=f"severidad {severidad}")
     if estado != "ACTIVE_UNACK":
+        log.info("Alarma %s ignorada: estado %s", alarm_id, estado)
         return jsonify(ok=True, ignorada=f"estado {estado}")
 
     tenant_id = _id(alarma.get("tenantId"))
