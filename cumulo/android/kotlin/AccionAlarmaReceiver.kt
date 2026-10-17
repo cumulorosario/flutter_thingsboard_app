@@ -17,6 +17,10 @@ class AccionAlarmaReceiver : BroadcastReceiver() {
 
         // Silenciar en el acto; la llamada al servidor sigue en segundo plano
         AlarmaCritica.silenciar(ctx, alarmId)
+        if (AlarmaCritica.esPrueba(datos)) {
+            Toast.makeText(ctx, "Prueba correcta. En una alarma real, este botón actúa en ThingsBoard.", Toast.LENGTH_LONG).show()
+            return
+        }
 
         val pendiente = goAsync()
         Thread {

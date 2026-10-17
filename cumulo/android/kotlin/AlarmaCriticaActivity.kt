@@ -1,6 +1,7 @@
 package org.thingsboard.app.cumulo
 
 import android.app.Activity
+import android.app.KeyguardManager
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -134,9 +135,11 @@ class AlarmaCriticaActivity : Activity() {
         compartir.setOnClickListener {
             AlarmaCritica.silenciar(this, alarmId)
             val severidadOriginal = d.getString(AlarmaCritica.K_SEVERIDAD) ?: "CRITICAL"
-            Compartir.abrir(this, "Alarma: $dispositivo — $tipo",
-                Compartir.textoAlarma(dispositivo, tipo, severidadOriginal, "Activa",
-                    d.getString("createdTime")?.toLongOrNull()))
+            desbloquearYLuego("compartir") {
+                Compartir.abrir(this, "Alarma: $dispositivo — $tipo",
+                    Compartir.textoAlarma(dispositivo, tipo, severidadOriginal, "Activa",
+                        d.getString("createdTime")?.toLongOrNull()))
+            }
         }
         noAvisar.setOnClickListener {
             android.app.AlertDialog.Builder(this)
@@ -155,6 +158,14 @@ class AlarmaCriticaActivity : Activity() {
 
         fun ejecutar(accion: String) {
             AlarmaCritica.silenciar(this, alarmId)
+            if (AlarmaCritica.esPrueba(d)) {
+                Toast.makeText(this,
+                    "Prueba correcta. En una alarma real, este botón la " +
+                        (if (accion == AlarmaCritica.ACCION_ACK) "reconoce" else "resuelve") + " en ThingsBoard.",
+                    Toast.LENGTH_LONG).show()
+                finish()
+                return
+            }
             reconocer.isEnabled = false
             resolver.isEnabled = false
             estado.text = "Enviando…"
@@ -181,6 +192,22 @@ class AlarmaCriticaActivity : Activity() {
             AlarmaCritica.silenciar(this, alarmId)
             finish()
         }
+    }
+
+    /** Pide desbloquear el teléfono (huella, PIN, etc.) y después ejecuta la acción. */
+    private fun desbloquearYLuego(para: String, accion: () -> Unit) {
+        val km = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+        if (!km.isKeyguardLocked || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            accion()
+            return
+        }
+        km.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
+            override fun onDismissSucceeded() = accion()
+            override fun onDismissCancelled() {
+                Toast.makeText(this@AlarmaCriticaActivity, "Desbloqueá el teléfono para $para", Toast.LENGTH_LONG).show()
+            }
+            override fun onDismissError() = onDismissCancelled()
+        })
     }
 
     companion object {

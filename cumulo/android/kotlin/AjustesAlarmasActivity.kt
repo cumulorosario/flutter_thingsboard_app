@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 
 /**
  * "Alarmas y notificaciones": estado de los permisos que necesita la alarma
@@ -140,16 +141,25 @@ class AjustesAlarmasActivity : Activity() {
         val prueba = tarjeta()
         prueba.addView(texto("Muestra una alarma crítica de prueba en este teléfono, sin pasar por el servidor. " +
             "Bloqueá el teléfono antes de 10 segundos para ver cómo se enciende.", 13f, Color.parseColor("#5B6B80")))
-        prueba.addView(boton("Probar alarma crítica en 10 segundos") {
+        lateinit var botonPrueba: Button
+        botonPrueba = boton(TEXTO_PRUEBA) {
+            botonPrueba.isEnabled = false
+            Toast.makeText(this, "Alarma de prueba en 10 segundos. Bloqueá el teléfono.", Toast.LENGTH_LONG).show()
+            for (s in 10 downTo 1) {
+                contenido.postDelayed({ botonPrueba.text = "Sonará en $s s… bloqueá el teléfono" }, (10 - s) * 1000L)
+            }
             contenido.postDelayed({
                 AlarmaCritica.mostrar(applicationContext, Bundle().apply {
-                    putString(AlarmaCritica.K_ID, "prueba-local-${System.currentTimeMillis()}")
+                    putString(AlarmaCritica.K_ID, "${AlarmaCritica.PREFIJO_PRUEBA}${System.currentTimeMillis()}")
                     putString(AlarmaCritica.K_DISPOSITIVO, "Equipo de prueba")
                     putString(AlarmaCritica.K_TIPO, "Prueba local de alarma crítica")
                     putString(AlarmaCritica.K_SEVERIDAD, "CRITICAL")
                 })
+                botonPrueba.text = TEXTO_PRUEBA
+                botonPrueba.isEnabled = true
             }, 10_000L)
-        })
+        }
+        prueba.addView(botonPrueba)
         contenido.addView(prueba)
 
         contenido.addView(titulo("ALARMAS SILENCIADAS EN ESTE TELÉFONO"))
@@ -174,6 +184,7 @@ class AjustesAlarmasActivity : Activity() {
     }
 
     companion object {
+        private const val TEXTO_PRUEBA = "Probar alarma crítica en 10 segundos"
         private val AZUL = Color.parseColor("#3F6EA6")
         private val AZUL_OSCURO = Color.parseColor("#1E3552")
         private val FONDO = Color.parseColor("#F5F7FA")

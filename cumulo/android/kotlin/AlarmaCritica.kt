@@ -135,6 +135,10 @@ object AlarmaCritica {
      * Cúmulo, usando la firma que vino en el mensaje (no hace falta sesión).
      * Se llama desde un hilo secundario. Devuelve null si salió bien, o el error.
      */
+    /** Las alarmas de prueba de Ajustes no existen en ThingsBoard. */
+    const val PREFIJO_PRUEBA = "prueba-local-"
+    fun esPrueba(datos: Bundle) = datos.getString(K_ID)?.startsWith(PREFIJO_PRUEBA) == true
+
     fun enviarAccion(datos: Bundle, accion: String): String? {
         val url = datos.getString(K_URL_ACCION) ?: return "Falta la dirección del servidor"
         val firma = datos.getString(if (accion == ACCION_ACK) K_FIRMA_ACK else K_FIRMA_CLEAR)
