@@ -29,8 +29,10 @@ monitoreo.cumuloingenieria.com.ar {
 	}
 
 	handle {
-		# Página principal: título, color de carga y archivos de Cúmulo
-		replace {
+		# Página principal: título, color de carga y archivos de Cúmulo.
+		# Solo en páginas: la API y su websocket pasan sin tocar.
+		@pagina not path /api/* /assets/* /static/* *.js *.css *.json *.svg *.png *.ico *.woff2 *.ttf
+		replace @pagina {
 			match {
 				header Content-Type text/html*
 			}
