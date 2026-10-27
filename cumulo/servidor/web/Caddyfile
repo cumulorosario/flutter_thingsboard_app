@@ -1,0 +1,57 @@
+{
+	# El módulo de reemplazo tiene que actuar antes de comprimir la respuesta
+	order replace after encode
+}
+
+monitoreo.cumuloingenieria.com.ar {
+	encode zstd gzip
+
+	# Botones Reconocer/Resolver de la alarma crítica
+	handle /cumulo-alertas/accion {
+		rewrite * /accion
+		reverse_proxy cumulo_alertas:5556
+	}
+
+	# Archivos de la marca Cúmulo
+	handle_path /cumulo-web/* {
+		root * /srv/cumulo-web
+		file_server
+	}
+	handle /assets/logo_title_white.svg {
+		root * /srv/cumulo-web
+		rewrite * /logo_title_white.svg
+		file_server
+	}
+	handle /thingsboard.ico {
+		root * /srv/cumulo-web
+		rewrite * /favicon.ico
+		file_server
+	}
+
+	handle {
+		# Página principal: título, color de carga y archivos de Cúmulo
+		replace {
+			match {
+				header Content-Type text/html*
+			}
+			"<title>ThingsBoard</title>" "<title>Cúmulo Monitoreo</title>"
+			"rgb(43,160,199)" "rgb(63,110,166)"
+			"</head>" "<link rel=\"stylesheet\" href=\"/cumulo-web/cumulo.css\"><script src=\"/cumulo-web/cumulo.js\"></script></head>"
+		}
+
+		# Colores de ThingsBoard -> colores de Cúmulo (los mismos de la app)
+		@estilos path *.css *.js
+		replace @estilos {
+			re "(?i)#305680" "#3f6ea6"
+			re "(?i)#527dad" "#6f99ca"
+			re "(?i)#a7c1de" "#b2c5db"
+			re "48,\s*86,\s*128" "63,110,166"
+			re "82,\s*125,\s*173" "111,153,202"
+		}
+
+		reverse_proxy thingsboard-ce:8080 {
+			# Sin compresión desde ThingsBoard, para poder reemplazar el texto
+			header_up Accept-Encoding identity
+		}
+	}
+}

@@ -1,0 +1,9 @@
+/* Cúmulo: ajustes visuales sobre la web de ThingsBoard.
+   Los colores principales se cambian en el Caddyfile (reemplazo directo en
+   los estilos de ThingsBoard); acá van solo detalles. */
+
+/* Fondo de la pantalla de carga y de las páginas, igual que la app */
+body, html { background-color: #F5F7FA; }
+
+/* Barras de desplazamiento con el azul Cúmulo */
+* { scrollbar-color: #B2C5DB transparent; }

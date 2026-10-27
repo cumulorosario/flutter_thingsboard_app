@@ -1,0 +1,58 @@
+name: Probar marca web (Caddy)
+
+# Se ejecuta a mano: construye el Caddy de Cúmulo y lo prueba contra una
+# imitación de ThingsBoard, para verificar los reemplazos antes de instalarlo.
+on:
+  workflow_dispatch:
+
+jobs:
+  probar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir imagen
+        run: docker build -t cumulo-caddy cumulo/servidor/web
+
+      - name: Probar reemplazos
+        run: |
+          set -e
+          WEB=$GITHUB_WORKSPACE/cumulo/servidor/web
+          mkdir -p /tmp/tb/assets && cd /tmp/tb
+          printf '<!doctype html><html><head><title>ThingsBoard</title><style>.s{background-color: rgb(43,160,199);}</style></head><body>ThingsBoard</body></html>' > index.html
+          printf '.a{color:#305680}.b{background:rgba(48, 86, 128, .5)}.c{color:#A7C1DE}' > styles-ABC.css
+          printf 'var x="#527DAD",y="rgb(82,125,173)";' > main-ABC.js
+          echo viejo > assets/logo_title_white.svg
+          echo viejo > thingsboard.ico
+          python3 -m http.server 9000 >/dev/null 2>&1 &
+          sed -e 's/^monitoreo.cumuloingenieria.com.ar {/:8081 {/' \
+              -e 's/thingsboard-ce:8080/host.docker.internal:9000/' "$WEB/Caddyfile" > /tmp/Caddyfile
+          docker run --rm -v /tmp/Caddyfile:/etc/caddy/Caddyfile cumulo-caddy caddy validate --config /etc/caddy/Caddyfile
+          docker run -d --name c --add-host host.docker.internal:host-gateway -p 8081:8081 \
+            -v /tmp/Caddyfile:/etc/caddy/Caddyfile -v "$WEB/archivos":/srv/cumulo-web:ro cumulo-caddy
+          sleep 3
+
+          falla=0
+          revisar() { if grep -qF -- "$2" "$1"; then echo "OK   $3"; else echo "FALLA $3"; falla=1; fi; }
+          curl -s --compressed localhost:8081/ -o pagina.html
+          curl -s --compressed localhost:8081/styles-ABC.css -o estilos.css
+          curl -s --compressed localhost:8081/main-ABC.js -o main.js
+          curl -s localhost:8081/assets/logo_title_white.svg -o logo.svg
+          curl -s localhost:8081/thingsboard.ico -o icono.ico
+          curl -s localhost:8081/cumulo-web/cumulo.js -o cumulo.js
+          curl -sI -H 'Accept-Encoding: gzip' localhost:8081/styles-ABC.css > cabeceras.txt
+          cat pagina.html estilos.css main.js; echo; cat cabeceras.txt
+          revisar pagina.html "<title>Cúmulo Monitoreo</title>" "título de la página"
+          revisar pagina.html "/cumulo-web/cumulo.css" "hoja de estilos de Cúmulo"
+          revisar pagina.html "rgb(63,110,166)" "color de la pantalla de carga"
+          revisar estilos.css "#3f6ea6" "color principal en CSS"
+          revisar estilos.css "63,110,166" "color principal rgba en CSS"
+          revisar estilos.css "#b2c5db" "color claro en CSS"
+          revisar main.js "#6f99ca" "color secundario en JS"
+          revisar main.js "111,153,202" "color secundario rgb en JS"
+          revisar logo.svg "#FFFFFF" "logo de Cúmulo"
+          revisar cumulo.js "MutationObserver" "script del título"
+          revisar cabeceras.txt "Content-Encoding: gzip" "compresión hacia el navegador"
+          cmp -s icono.ico "$WEB/archivos/favicon.ico" && echo "OK   ícono" || { echo "FALLA ícono"; falla=1; }
+          docker logs c 2>&1 | tail -20
+          exit $falla

@@ -1,0 +1,7 @@
+# Caddy con la marca Cúmulo. Se suma a COMPOSE_FILE en el .env.
+services:
+  caddy:
+    build: ./cumulo_web
+    image: cumulo-caddy
+    volumes:
+      - ./cumulo_web/archivos:/srv/cumulo-web:ro
