@@ -31,13 +31,16 @@ jobs:
           python3 -m http.server 9000 >/dev/null 2>&1 &
           sed -e 's/^monitoreo.cumuloingenieria.com.ar {/:8081 {/' \
               -e 's/thingsboard-ce:8080/host.docker.internal:9000/' "$WEB/Caddyfile" > /tmp/Caddyfile
-          docker run --rm -v /tmp/Caddyfile:/etc/caddy/Caddyfile cumulo-caddy caddy validate --config /etc/caddy/Caddyfile
+          if ! docker run --rm -v /tmp/Caddyfile:/etc/caddy/Caddyfile cumulo-caddy caddy validate --config /etc/caddy/Caddyfile > validar.txt 2>&1; then
+            echo "::error title=Caddyfile inválido::$(grep -iE 'error|Error' validar.txt | tail -3 | tr '\n' ' ')"
+            exit 1
+          fi
           docker run -d --name c --add-host host.docker.internal:host-gateway -p 8081:8081 \
             -v /tmp/Caddyfile:/etc/caddy/Caddyfile -v "$WEB/archivos":/srv/cumulo-web:ro cumulo-caddy
           sleep 3
 
           falla=0
-          revisar() { if grep -qF -- "$2" "$1"; then echo "OK   $3"; else echo "FALLA $3"; falla=1; fi; }
+          revisar() { if grep -qF -- "$2" "$1"; then echo "::notice::OK $3"; else echo "::error::FALLA $3 — recibido: $(head -c 300 "$1" | tr '\n' ' ')"; falla=1; fi; }
           curl -s --compressed localhost:8081/ -o pagina.html
           curl -s --compressed localhost:8081/styles-ABC.css -o estilos.css
           curl -s --compressed localhost:8081/main-ABC.js -o main.js
@@ -57,6 +60,7 @@ jobs:
           revisar logo.svg "#FFFFFF" "logo de Cúmulo"
           revisar cumulo.js "MutationObserver" "script del título"
           revisar cabeceras.txt "Content-Encoding: gzip" "compresión hacia el navegador"
-          cmp -s icono.ico "$WEB/archivos/favicon.ico" && echo "OK   ícono" || { echo "FALLA ícono"; falla=1; }
+          cmp -s icono.ico "$WEB/archivos/favicon.ico" && echo "::notice::OK ícono" || { echo "::error::FALLA ícono"; falla=1; }
+          [ $falla = 0 ] || echo "::error title=Registro de Caddy::$(docker logs c 2>&1 | grep -i error | tail -3 | tr '\n' ' ')"
           docker logs c 2>&1 | tail -20
           exit $falla
