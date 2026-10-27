@@ -35,7 +35,7 @@ jobs:
             echo "::error title=Caddyfile inválido::$(grep -iE 'error|Error' validar.txt | tail -3 | tr '\n' ' ')"
             exit 1
           fi
-          if ! docker run -d --name c --add-host host.docker.internal:host-gateway -p 8081:8081 \
+          if ! docker run -d --name caddyweb --add-host host.docker.internal:host-gateway -p 8081:8081 \
             -v /tmp/Caddyfile:/etc/caddy/Caddyfile -v "$WEB/archivos":/srv/cumulo-web:ro cumulo-caddy > arranque.txt 2>&1; then
             echo "::error title=No arrancó Caddy::$(tail -3 arranque.txt | tr '\n' ' ')"
             exit 1
@@ -64,6 +64,6 @@ jobs:
           revisar cumulo.js "MutationObserver" "script del título"
           revisar cabeceras.txt "Content-Encoding: gzip" "compresión hacia el navegador"
           cmp -s icono.ico "$WEB/archivos/favicon.ico" && echo "::notice::OK ícono" || { echo "::error::FALLA ícono"; falla=1; }
-          [ $falla = 0 ] || echo "::error title=Registro de Caddy::$(docker logs c 2>&1 | grep -i error | tail -3 | tr '\n' ' ')"
-          docker logs c 2>&1 | tail -20
+          [ $falla = 0 ] || echo "::error title=Registro de Caddy::$(docker logs caddyweb 2>&1 | grep -i error | tail -3 | tr '\n' ' ')"
+          docker logs caddyweb 2>&1 | tail -20
           exit $falla
