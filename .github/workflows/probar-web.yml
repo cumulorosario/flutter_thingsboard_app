@@ -35,8 +35,11 @@ jobs:
             echo "::error title=Caddyfile inválido::$(grep -iE 'error|Error' validar.txt | tail -3 | tr '\n' ' ')"
             exit 1
           fi
-          docker run -d --name c --add-host host.docker.internal:host-gateway -p 8081:8081 \
-            -v /tmp/Caddyfile:/etc/caddy/Caddyfile -v "$WEB/archivos":/srv/cumulo-web:ro cumulo-caddy
+          if ! docker run -d --name c --add-host host.docker.internal:host-gateway -p 8081:8081 \
+            -v /tmp/Caddyfile:/etc/caddy/Caddyfile -v "$WEB/archivos":/srv/cumulo-web:ro cumulo-caddy > arranque.txt 2>&1; then
+            echo "::error title=No arrancó Caddy::$(tail -3 arranque.txt | tr '\n' ' ')"
+            exit 1
+          fi
           sleep 3
 
           falla=0
