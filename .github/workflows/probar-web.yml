@@ -25,6 +25,7 @@ jobs:
           mkdir -p /tmp/tb/assets && cd /tmp/tb
           printf '<!doctype html><html><head><title>ThingsBoard</title><style>.s{background-color: rgb(43,160,199);}</style></head><body>ThingsBoard</body></html>' > index.html
           printf '.a{color:#305680}.b{background:rgba(48, 86, 128, .5)}.c{color:#A7C1DE}' > styles-ABC.css
+          for i in $(seq 200); do printf '.relleno%s{margin:0}' $i >> styles-ABC.css; done
           printf 'var x="#527DAD",y="rgb(82,125,173)";' > main-ABC.js
           echo viejo > assets/logo_title_white.svg
           echo viejo > thingsboard.ico
@@ -43,14 +44,14 @@ jobs:
           sleep 3
 
           falla=0
-          revisar() { if grep -qF -- "$2" "$1"; then echo "::notice::OK $3"; else echo "::error::FALLA $3 — recibido: $(head -c 300 "$1" | tr '\n' ' ')"; falla=1; fi; }
+          revisar() { if grep -qF -- "$2" "$1"; then echo "OK $3"; oks="$oks, $3"; else echo "::error::FALLA $3 — recibido: $(head -c 300 "$1" | tr '\n' ' ')"; falla=1; fi; }
           curl -s --compressed localhost:8081/ -o pagina.html
           curl -s --compressed localhost:8081/styles-ABC.css -o estilos.css
           curl -s --compressed localhost:8081/main-ABC.js -o main.js
           curl -s localhost:8081/assets/logo_title_white.svg -o logo.svg
           curl -s localhost:8081/thingsboard.ico -o icono.ico
           curl -s localhost:8081/cumulo-web/cumulo.js -o cumulo.js
-          curl -sI -H 'Accept-Encoding: gzip' localhost:8081/styles-ABC.css > cabeceras.txt
+          curl -s -o /dev/null -D cabeceras.txt -H 'Accept-Encoding: gzip' localhost:8081/styles-ABC.css
           cat pagina.html estilos.css main.js; echo; cat cabeceras.txt
           revisar pagina.html "<title>Cúmulo Monitoreo</title>" "título de la página"
           revisar pagina.html "/cumulo-web/cumulo.css" "hoja de estilos de Cúmulo"
@@ -63,7 +64,8 @@ jobs:
           revisar logo.svg "#FFFFFF" "logo de Cúmulo"
           revisar cumulo.js "MutationObserver" "script del título"
           revisar cabeceras.txt "Content-Encoding: gzip" "compresión hacia el navegador"
-          cmp -s icono.ico "$WEB/archivos/favicon.ico" && echo "::notice::OK ícono" || { echo "::error::FALLA ícono"; falla=1; }
+          cmp -s icono.ico "$WEB/archivos/favicon.ico" && oks="$oks, ícono" || { echo "::error::FALLA ícono"; falla=1; }
+          echo "::notice title=Pruebas correctas::${oks#, }"
           [ $falla = 0 ] || echo "::error title=Registro de Caddy::$(docker logs caddyweb 2>&1 | grep -i error | tail -3 | tr '\n' ' ')"
           docker logs caddyweb 2>&1 | tail -20
           exit $falla
