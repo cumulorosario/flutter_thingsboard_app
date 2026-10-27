@@ -5,6 +5,10 @@ name: Cúmulo Monitoreo — Build Android
 on:
   push:
     branches: [cumulo]
+    # Los cambios solo del servidor no necesitan una app nueva
+    paths-ignore:
+      - "cumulo/servidor/**"
+      - ".github/workflows/probar-web.yml"
   workflow_dispatch:
     inputs:
       formato:

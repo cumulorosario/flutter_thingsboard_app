@@ -1,9 +1,13 @@
 name: Probar marca web (Caddy)
 
-# Se ejecuta a mano: construye el Caddy de Cúmulo y lo prueba contra una
+# Se ejecuta al cambiar cumulo/servidor/web: construye el Caddy de Cúmulo y lo prueba contra una
 # imitación de ThingsBoard, para verificar los reemplazos antes de instalarlo.
 on:
-  workflow_dispatch:
+  push:
+    branches: [cumulo]
+    paths:
+      - "cumulo/servidor/web/**"
+      - ".github/workflows/probar-web.yml"
 
 jobs:
   probar:
