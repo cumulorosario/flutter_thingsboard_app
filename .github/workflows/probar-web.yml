@@ -24,7 +24,7 @@ jobs:
           WEB=$GITHUB_WORKSPACE/cumulo/servidor/web
           mkdir -p /tmp/tb/assets && cd /tmp/tb
           printf '<!doctype html><html><head><title>ThingsBoard</title><style>.s{background-color: rgb(43,160,199);}</style></head><body>ThingsBoard</body></html>' > index.html
-          printf '.a{color:#305680}.b{background:rgba(48, 86, 128, .5)}.c{color:#A7C1DE}' > styles-ABC.css
+          printf '.a{color:#305680}.b{background:rgba(48, 86, 128, .5)}.c{color:#A7C1DE}.d{color:#FF5722}.e{color:rgba(255, 87, 34, .2)}' > styles-ABC.css
           for i in $(seq 200); do printf '.relleno%s{margin:0}' $i >> styles-ABC.css; done
           printf 'var x="#527DAD",y="rgb(82,125,173)";' > main-ABC.js
           echo viejo > assets/logo_title_white.svg
@@ -59,6 +59,8 @@ jobs:
           revisar estilos.css "#3f6ea6" "color principal en CSS"
           revisar estilos.css "63,110,166" "color principal rgba en CSS"
           revisar estilos.css "#b2c5db" "color claro en CSS"
+          revisar estilos.css "#1e3552" "acento en CSS"
+          revisar estilos.css "30,53,82" "acento rgba en CSS"
           revisar main.js "#6f99ca" "color secundario en JS"
           revisar main.js "111,153,202" "color secundario rgb en JS"
           revisar logo.svg "#FFFFFF" "logo de Cúmulo"

@@ -49,6 +49,9 @@ monitoreo.cumuloingenieria.com.ar {
 			re "(?i)#a7c1de" "#b2c5db"
 			re "48,\s*86,\s*128" "63,110,166"
 			re "82,\s*125,\s*173" "111,153,202"
+			# Acento naranja de ThingsBoard -> azul marino Cúmulo
+			re "(?i)#ff5722" "#1e3552"
+			re "255,\s*87,\s*34" "30,53,82"
 		}
 
 		reverse_proxy thingsboard-ce:8080 {

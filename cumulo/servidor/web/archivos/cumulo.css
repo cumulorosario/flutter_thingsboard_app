@@ -7,3 +7,6 @@ body, html { background-color: #F5F7FA; }
 
 /* Barras de desplazamiento con el azul Cúmulo */
 * { scrollbar-color: #B2C5DB transparent; }
+
+/* Botón "Star" de GitHub en la barra superior */
+tb-github-badge { display: none !important; }
