@@ -71,3 +71,79 @@ jobs:
           [ $falla = 0 ] || echo "::error title=Registro de Caddy::$(docker logs caddyweb 2>&1 | grep -i error | tail -3 | tr '\n' ' ')"
           docker logs caddyweb 2>&1 | tail -20
           exit $falla
+
+  # Prueba contra ThingsBoard real (la versión actual y la de destino)
+  real:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tb: ["4.2.1.1", "4.3.1.8"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir imagen
+        run: docker build -t cumulo-caddy cumulo/servidor/web
+
+      - name: Levantar ThingsBoard ${{ matrix.tb }}
+        run: |
+          if ! docker pull -q thingsboard/tb-postgres:${{ matrix.tb }} > tirar.txt 2>&1; then
+            echo "::error title=Imagen ${{ matrix.tb }}::$(tail -2 tirar.txt | tr '\n' ' ')"; exit 1
+          fi
+          docker run -d --name tb -p 8080:9090 thingsboard/tb-postgres:${{ matrix.tb }}
+          for i in $(seq 90); do
+            curl -sf localhost:8080/login -o /dev/null && break
+            sleep 5
+          done
+          curl -sf localhost:8080/login -o /dev/null || { echo "::error::ThingsBoard ${{ matrix.tb }} no arrancó: $(docker logs tb 2>&1 | grep -i error | tail -2 | tr '\n' ' ')"; exit 1; }
+
+      - name: Probar marca contra ThingsBoard ${{ matrix.tb }}
+        run: |
+          WEB=$GITHUB_WORKSPACE/cumulo/servidor/web
+          sed -e 's/^monitoreo.cumuloingenieria.com.ar {/:8081 {/' \
+              -e 's/thingsboard-ce:8080/host.docker.internal:8080/' "$WEB/Caddyfile" > /tmp/Caddyfile
+          docker run -d --name caddyweb --add-host host.docker.internal:host-gateway -p 8081:8081 \
+            -v /tmp/Caddyfile:/etc/caddy/Caddyfile -v "$WEB/archivos":/srv/cumulo-web:ro cumulo-caddy
+          sleep 3
+          falla=0; oks=""
+          ok() { oks="$oks, $1"; }
+          mal() { echo "::error title=TB ${{ matrix.tb }}::$1"; falla=1; }
+
+          curl -s localhost:8080/login -o original.html
+          curl -s --compressed localhost:8081/login -o marca.html
+          grep -qF "<title>Cúmulo Monitoreo</title>" marca.html && ok "título" || mal "título: $(grep -o '<title>[^<]*' marca.html)"
+          grep -qF "cumulo-web/cumulo.css" marca.html && ok "estilos Cúmulo" || mal "no se insertó cumulo.css"
+          grep -qF 'thingsboard.ico' original.html && ok "ruta del ícono" || mal "el ícono ya no es thingsboard.ico"
+
+          css=$(grep -o 'styles[^"]*\.css' original.html | head -1)
+          main=$(grep -o 'main[^"]*\.js' original.html | head -1)
+          echo "css=$css main=$main"
+          curl -s localhost:8080/$css -o css0; curl -s --compressed localhost:8081/$css -o css1
+          curl -s localhost:8080/$main -o js0; curl -s --compressed localhost:8081/$main -o js1
+          n0=$(grep -oi '#305680' css0 js0 | wc -l); n1=$(grep -oi '#305680' css1 js1 | wc -l); n2=$(grep -oi '#3f6ea6' css1 js1 | wc -l)
+          echo "#305680 original=$n0 con marca=$n1; #3f6ea6 con marca=$n2"
+          [ "$n0" -gt 0 ] && [ "$n1" = 0 ] && [ "$n2" -ge "$n0" ] && ok "color principal ($n0 lugares)" || mal "color principal: original=$n0 restante=$n1 nuevo=$n2"
+          a0=$(grep -oi '#ff5722' css0 js0 | wc -l); a1=$(grep -oi '#ff5722' css1 js1 | wc -l)
+          [ "$a1" = 0 ] && ok "acento ($a0 lugares)" || mal "acento: quedan $a1 de $a0"
+          grep -rqF 'assets/logo_title_white.svg' js0 && ok "ruta del logo" || mal "el logo ya no es assets/logo_title_white.svg"
+          grep -rqF 'tb-github-badge' js0 && ok "botón GitHub ocultable" || mal "ya no existe tb-github-badge"
+          curl -s localhost:8081/assets/logo_title_white.svg | grep -qF '#FFFFFF' && ok "logo Cúmulo" || mal "no se sirve el logo de Cúmulo"
+
+          # Inicio de sesión y websocket a través de Caddy
+          token=$(curl -s -X POST localhost:8081/api/auth/login -H 'Content-Type: application/json' \
+            -d '{"username":"tenant@thingsboard.org","password":"tenant"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+          [ -n "$token" ] && ok "API a través de Caddy" || mal "falló el login por la API"
+          pip install -q websockets >/dev/null 2>&1
+          if python3 - "$token" <<'PY'
+          import asyncio, sys, json, websockets
+          async def main():
+              async with websockets.connect("ws://localhost:8081/api/ws") as ws:
+                  await ws.send(json.dumps({"authCmd": {"cmdId": 0, "token": sys.argv[1]}}))
+                  await ws.send(json.dumps({"cmds": [{"type": "ALARM_COUNT", "cmdId": 1, "query": {}}]}))
+                  print(await asyncio.wait_for(ws.recv(), 15))
+          asyncio.run(main())
+          PY
+          then ok "websocket (datos en vivo)"; else mal "el websocket no funciona a través de Caddy"; fi
+
+          echo "::notice title=TB ${{ matrix.tb }} correcto::${oks#, }"
+          exit $falla
